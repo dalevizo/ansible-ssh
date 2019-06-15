@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+import subprocess
+import sys
+import yaml
+import os
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument("--inventory", '-i',help='ansible inventory file to use instead of the one defined in ansible.cfg')
+parser.add_argument("--key-file", '-k',dest="keyfile", help='ssh private key file to use instead of the default for the user')
+parser.add_argument("--user", '-u', '-l',dest="user", help='override the user defined in ansible inventory file')
+parser.add_argument("--verbose", '-v',action="store_true", dest="verbose", default=False,help='pass verbose flag to ssh command')
+parser.add_argument("--become", '-b',action="store_true", dest="become", default=False,help='ssh as root instead of the inventory-supplied account')
+parser.add_argument("host",nargs='?',help='the host to ssh into, if not provided a list of available hosts in current inventory file is printed')
+args = parser.parse_args()
+
+clean_inventory = ansible_ssh_config_args = ssh_user = ''
+ansible_ssh_default_user = None
+ansible_ssh_default_keyfile = None
+inventory_args = []
+ssh_args = ['ssh']
+
+if args.inventory:
+    inventory_args += ['-i',args.inventory]
+
+if args.host is None:
+    print "You must specify one host to ssh into"
+    with open(os.devnull, 'w') as devnull:
+        hostlist = subprocess.check_output(['ansible','--list-hosts','all'] + inventory_args,stderr=devnull)
+        for line in hostlist.splitlines():
+            print line
+    sys.exit(-1)
+host = args.host
+
+inventory_args += ['--yaml','--host',host]
+
+if args.keyfile:
+    ssh_args += ['-i',args.keyfile]
+if args.verbose:
+    ssh_args += ['-v']
+
+# initial try just to capture host missing cases
+try:
+   inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=subprocess.STDOUT)
+except subprocess.CalledProcessError as e:
+   print "it seems the host doesn't exist in the inventory file"
+   for line in e.output.splitlines():
+      if 'Could not match supplied host pattern' in line:
+         print line
+   sys.exit(-1)
+
+with open(os.devnull, 'w') as devnull:
+    inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=devnull)
+for line in inventory.splitlines():
+    if 'WARNING' not in line and 'deprecation_' not in line:
+        clean_inventory += line+'\n'
+inv = yaml.safe_load(clean_inventory)
+
+try:
+   ansible_config = subprocess.check_output(['ansible-config','dump'])
+except subprocess.CalledProcessError as e:
+   print e
+   sys.exit(-1)
+
+for line in ansible_config.splitlines():
+    if 'ANSIBLE_SSH_ARGS' in line:
+        ansible_ssh_config_args = line.split(' = ')[1]
+    elif 'DEFAULT_REMOTE_USER' in line:
+        ansible_ssh_default_user = line.split(' = ')[1]
+    elif 'DEFAULT_PRIVATE_KEY_FILE' in line and not line.endswith('None'):
+        ansible_ssh_default_keyfile = line.split(' = ')[1]
+ssh_args += [ansible_ssh_config_args]
+
+if 'ansible_ssh_common_args' in inv:
+    ssh_args += [inv['ansible_ssh_common_args']]
+if ansible_ssh_default_user:
+    ssh_user = ansible_ssh_default_user
+if 'ansible_user' in inv:
+    ssh_user = inv['ansible_user']
+if args.user:
+    ssh_user = args.user
+if args.become:
+    ssh_user = 'root'
+if ansible_ssh_default_keyfile:
+    ssh_args += ['-i',ansible_ssh_default_keyfile]
+ssh_args += ['-l',ssh_user,inv['ansible_host']]
+
+command = ' '.join(ssh_args)
+print ("executing {}".format(command))
+os.system("{}".format(command))
