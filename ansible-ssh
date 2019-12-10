@@ -73,6 +73,8 @@ ssh_args += [ansible_ssh_config_args]
 
 if 'ansible_ssh_common_args' in inv:
     ssh_args += [inv['ansible_ssh_common_args']]
+if 'ansible_ssh_extra_args' in inv:
+    ssh_args += [inv['ansible_ssh_extra_args']]
 if ansible_ssh_default_user:
     ssh_user = ansible_ssh_default_user
 if 'ansible_user' in inv:
