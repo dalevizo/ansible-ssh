@@ -5,6 +5,8 @@ Adds interactive SSH capabilities to Ansible,
 especially useful in setups with VMs in private
 subnets accessible only via jumphosts.
 
+It uses Ansible's inventory file so any ``ansible_ssh_common_args`` or ``ansible_ssh_extra_args`` apply to ``ansible-ssh`` as well.
+
 Requirements
 ------------
 * ``ansible``
