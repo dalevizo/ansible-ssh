@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import subprocess
 import sys
 import yaml
@@ -24,11 +24,11 @@ if args.inventory:
     inventory_args += ['-i',args.inventory]
 
 if args.host is None:
-    print "You must specify one host to ssh into"
+    print("You must specify one host to ssh into")
     with open(os.devnull, 'w') as devnull:
-        hostlist = subprocess.check_output(['ansible','--list-hosts','all'] + inventory_args,stderr=devnull)
+        hostlist = subprocess.check_output(['ansible','--list-hosts','all'] + inventory_args,stderr=devnull, text=True)
         for line in hostlist.splitlines():
-            print line
+            print(line)
     sys.exit(-1)
 host = args.host
 
@@ -41,25 +41,25 @@ if args.verbose:
 
 # initial try just to capture host missing cases
 try:
-   inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=subprocess.STDOUT)
+   inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=subprocess.STDOUT, text=True)
 except subprocess.CalledProcessError as e:
-   print "it seems the host doesn't exist in the inventory file"
+   print("it seems the host doesn't exist in the inventory file")
    for line in e.output.splitlines():
       if 'Could not match supplied host pattern' in line:
-         print line
+         print(line)
    sys.exit(-1)
 
 with open(os.devnull, 'w') as devnull:
-    inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=devnull)
+    inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=devnull, text=True)
 for line in inventory.splitlines():
     if 'WARNING' not in line and 'deprecation_' not in line:
         clean_inventory += line+'\n'
 inv = yaml.safe_load(clean_inventory)
 
 try:
-   ansible_config = subprocess.check_output(['ansible-config','dump'])
+   ansible_config = subprocess.check_output(['ansible-config','dump'], text=True)
 except subprocess.CalledProcessError as e:
-   print e
+   print(e)
    sys.exit(-1)
 
 for line in ansible_config.splitlines():
