@@ -26,7 +26,7 @@ if args.inventory:
 if args.host is None:
     print("You must specify one host to ssh into")
     with open(os.devnull, 'w') as devnull:
-        hostlist = subprocess.check_output(['ansible','--list-hosts','all'] + inventory_args,stderr=devnull, text=True)
+        hostlist = subprocess.check_output(['ansible','--list-hosts','all'] + inventory_args,stderr=devnull).decode('utf-8')
         for line in hostlist.splitlines():
             print(line)
     sys.exit(-1)
@@ -41,7 +41,7 @@ if args.verbose:
 
 # initial try just to capture host missing cases
 try:
-   inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=subprocess.STDOUT, text=True)
+   inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=subprocess.STDOUT).decode('utf-8')
 except subprocess.CalledProcessError as e:
    print("it seems the host doesn't exist in the inventory file")
    for line in e.output.splitlines():
@@ -50,14 +50,14 @@ except subprocess.CalledProcessError as e:
    sys.exit(-1)
 
 with open(os.devnull, 'w') as devnull:
-    inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=devnull, text=True)
+    inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=devnull).decode('utf-8')
 for line in inventory.splitlines():
     if 'WARNING' not in line and 'deprecation_' not in line:
         clean_inventory += line+'\n'
 inv = yaml.safe_load(clean_inventory)
 
 try:
-   ansible_config = subprocess.check_output(['ansible-config','dump'], text=True)
+   ansible_config = subprocess.check_output(['ansible-config','dump']).decode('utf-8')
 except subprocess.CalledProcessError as e:
    print(e)
    sys.exit(-1)

@@ -5,7 +5,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
      name='ansible-ssh',  
-     version='0.6',
+     version='0.8',
      scripts=['ansible-ssh'] ,
      author="Dimos Alevizos",
      author_email="dimos@alevizos.gr",
@@ -13,7 +13,7 @@ setuptools.setup(
      long_description=long_description,
      packages=setuptools.find_packages(),
      classifiers=[
-         "Programming Language :: Python :: 2",
+         "Programming Language :: Python :: 3",
          "License :: OSI Approved :: MIT License",
          "Operating System :: OS Independent",
      ],
