@@ -5,7 +5,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
      name='ansible-ssh',  
-     version='0.8',
+     version='0.9',
      scripts=['ansible-ssh'] ,
      author="Dimos Alevizos",
      author_email="dimos@alevizos.gr",

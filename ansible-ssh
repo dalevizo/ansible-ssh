@@ -43,10 +43,11 @@ if args.verbose:
 try:
    inventory = subprocess.check_output(['ansible-inventory'] + inventory_args,stderr=subprocess.STDOUT).decode('utf-8')
 except subprocess.CalledProcessError as e:
-   print("it seems the host doesn't exist in the inventory file")
    for line in e.output.splitlines():
-      if 'Could not match supplied host pattern' in line:
-         print(line)
+      if 'Could not match supplied host pattern' in line.decode('utf-8'):
+         print(line.decode('utf-8').lstrip())
+      if 'You must pass a single valid host' in line.decode('utf-8'):
+         print(line.decode('utf-8').lstrip())
    sys.exit(-1)
 
 with open(os.devnull, 'w') as devnull:
