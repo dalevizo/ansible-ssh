@@ -1,9 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/local/opt/python/bin/python3.7
 import subprocess
 import sys
 import yaml
 import os
 from argparse import ArgumentParser
+
+def vault_decode(loader, node):
+    encrypted_data = loader.construct_scalar(node)
+    ret = subprocess.check_output(['ansible-vault', 'view'],
+            input=encrypted_data.encode('utf-8')).rstrip()
+    return ret
 
 parser = ArgumentParser()
 parser.add_argument("--inventory", '-i',help='ansible inventory file to use instead of the one defined in ansible.cfg')
@@ -55,6 +61,8 @@ with open(os.devnull, 'w') as devnull:
 for line in inventory.splitlines():
     if 'WARNING' not in line and 'deprecation_' not in line:
         clean_inventory += line+'\n'
+
+yaml.SafeLoader.add_constructor('!vault', vault_decode)
 inv = yaml.safe_load(clean_inventory)
 
 try:
