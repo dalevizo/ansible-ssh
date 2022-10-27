@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+#!/Users/mkartson/ansible_venv/bin/python3
 import subprocess
 import sys
 import yaml
 import os
+from ansible.parsing.utils.yaml import from_yaml
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
@@ -55,7 +56,7 @@ with open(os.devnull, 'w') as devnull:
 for line in inventory.splitlines():
     if 'WARNING' not in line and 'deprecation_' not in line:
         clean_inventory += line+'\n'
-inv = yaml.safe_load(clean_inventory)
+inv = from_yaml(clean_inventory)
 
 try:
    ansible_config = subprocess.check_output(['ansible-config','dump']).decode('utf-8')
