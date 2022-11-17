@@ -23,7 +23,7 @@ args = parser.parse_args()
 clean_inventory = ansible_ssh_config_args = ssh_user = ''
 ansible_ssh_default_user = None
 ansible_ssh_default_keyfile = None
-ansible_ssh_private_key = None
+ansible_ssh_private_key_file = None
 ansible_args = []
 ssh_args = ['ssh']
 
@@ -42,8 +42,6 @@ host = args.host
 
 inventory_args = ansible_args + ['--yaml', '--host', host]
 
-if args.keyfile:
-    ssh_args += ['-i', args.keyfile]
 if args.verbose:
     ssh_args += ['-v']
 
@@ -76,14 +74,14 @@ except subprocess.CalledProcessError as e:
 
 try:
     host_config = subprocess.check_output(['ansible'] + ansible_args + [host, '-m', 'ansible.builtin.debug', '-a',
-                                          'msg="ansible_ssh_private_key={{ ansible_ssh_private_key_file | default(None) }}"'], stderr=subprocess.STDOUT).decode('utf-8')
+                                          'msg="ansible_ssh_private_key_file={{ ansible_ssh_private_key_file | default(None) }}"'], stderr=subprocess.STDOUT).decode('utf-8')
 except subprocess.CalledProcessError as e:
     print(e)
     sys.exit(-1)
 
 for line in host_config.splitlines():
-    if "ansible_ssh_private_key" in line:
-        ansible_ssh_private_key = line.replace(
+    if "ansible_ssh_private_key_file" in line:
+        ansible_ssh_private_key_file = line.replace(
             '"', '').replace('msg: ', '').split('=')[1]
 
 for line in ansible_config.splitlines():
@@ -107,10 +105,12 @@ if args.user:
     ssh_user = args.user
 if args.become:
     ssh_user = 'root'
-if ansible_ssh_default_keyfile:
+if args.keyfile:
+    ssh_args += ['-i', args.keyfile]
+elif ansible_ssh_private_key_file:
+    ssh_args += ['-i', ansible_ssh_private_key_file]
+elif ansible_ssh_default_keyfile:
     ssh_args += ['-i', ansible_ssh_default_keyfile]
-if ansible_ssh_private_key:
-    ssh_args += ['-i', ansible_ssh_private_key]
 ssh_args += ['-l', ssh_user, inv['ansible_host']]
 
 command = ' '.join(ssh_args)
